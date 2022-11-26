@@ -63,9 +63,9 @@ if __name__ == "__main__":
     images = [x.replace("_mask.png", ".png") for x in masks]
     print(f"Found {len(masks)} inputs.")
 
-    config = OmegaConf.load(opt.modelpath + "/config.yaml")
+    config = OmegaConf.load("models/ldm/inpainting_big/config.yaml")
     model = instantiate_from_config(config.model)
-    model.load_state_dict(torch.load(opt.modelpath + "/last.ckpt")["state_dict"],
+    model.load_state_dict(torch.load(opt.modelpath)["state_dict"],
                           strict=False)
 
     device = torch.device(
