@@ -1,4 +1,7 @@
-import argparse, os, sys, glob
+import argparse
+import os
+import sys
+import glob
 from omegaconf import OmegaConf
 from PIL import Image
 from tqdm import tqdm
@@ -8,15 +11,15 @@ from main import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 
 
-def make_batch(image, mask, device):
+def make_batch(image, mask, device, model_path):
     image = np.array(Image.open(image).convert("RGB"))
     image = image.astype(np.float32)/255.0
-    image = image[None].transpose(0,3,1,2)
+    image = image[None].transpose(0, 3, 1, 2)
     image = torch.from_numpy(image)
 
     mask = np.array(Image.open(mask).convert("L"))
     mask = mask.astype(np.float32)/255.0
-    mask = mask[None,None]
+    mask = mask[None, None]
     mask[mask < 0.5] = 0
     mask[mask >= 0.5] = 1
     mask = torch.from_numpy(mask)
@@ -50,18 +53,23 @@ if __name__ == "__main__":
         default=50,
         help="number of ddim sampling steps",
     )
+    parser.add_argument(
+        "--modelpath",
+        type=str
+    )
     opt = parser.parse_args()
 
     masks = sorted(glob.glob(os.path.join(opt.indir, "*_mask.png")))
     images = [x.replace("_mask.png", ".png") for x in masks]
     print(f"Found {len(masks)} inputs.")
 
-    config = OmegaConf.load("models/ldm/inpainting_big/config.yaml")
+    config = OmegaConf.load(opt.modelpath + "/config.yaml")
     model = instantiate_from_config(config.model)
-    model.load_state_dict(torch.load("models/ldm/inpainting_big/last.ckpt")["state_dict"],
+    model.load_state_dict(torch.load(opt.modelpath + "/last.ckpt")["state_dict"],
                           strict=False)
 
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    device = torch.device(
+        "cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)
     sampler = DDIMSampler(model)
 
@@ -94,5 +102,6 @@ if __name__ == "__main__":
                                               min=0.0, max=1.0)
 
                 inpainted = (1-mask)*image+mask*predicted_image
-                inpainted = inpainted.cpu().numpy().transpose(0,2,3,1)[0]*255
+                inpainted = inpainted.cpu().numpy(
+                ).transpose(0, 2, 3, 1)[0]*255
                 Image.fromarray(inpainted.astype(np.uint8)).save(outpath)
