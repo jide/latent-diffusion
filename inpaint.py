@@ -11,7 +11,7 @@ from main import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 
 
-def make_batch(image, mask, device, model_path):
+def make_batch(image, mask, device):
     image = np.array(Image.open(image).convert("RGB"))
     image = image.astype(np.float32)/255.0
     image = image[None].transpose(0, 3, 1, 2)
