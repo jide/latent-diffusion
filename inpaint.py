@@ -59,8 +59,8 @@ if __name__ == "__main__":
     )
     opt = parser.parse_args()
 
-    masks = sorted(glob.glob(os.path.join(opt.indir, "*_mask.png")))
-    images = [x.replace("_mask.png", ".png") for x in masks]
+    masks = sorted(glob.glob(os.path.join(opt.indir, "*_mask.*")))
+    images = [x.replace("_mask", "") for x in masks]
     print(f"Found {len(masks)} inputs.")
 
     cwd = os.path.abspath(os.path.dirname(sys.argv[0]))
